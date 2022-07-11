@@ -9,6 +9,10 @@ inputs:
      description: 'Desired public callable method of a use case.'
      required: false
      default: 'run'
+   congrats-message:
+     description: 'The message that is printed in the approve review message.'
+     required: false
+     default: 'The use cases for this pull requests were implemented correctly! Good job 👍'
 outputs:
 runs:
   using: 'node16'
