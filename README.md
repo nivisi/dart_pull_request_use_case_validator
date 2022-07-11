@@ -9,6 +9,10 @@ This action validates your code base to have correct use case classes.
 - That class must match the file name, e.g. for `my_super_use_case.dart` it would be `MySuperUseCase`;
 - The use case class must contain only one callable public method. The name of that method is configurable, see below.
 
+## Example
+
+Check out the [example repository](https://github.com/nivisi/dart_pull_request_use_case_validator_example) with two Pull Requests: [valid](https://github.com/nivisi/dart_pull_request_use_case_validator_example/pull/2) and [invalid](https://github.com/nivisi/dart_pull_request_use_case_validator_example/pull/1).
+
 ## How it works
 
 ### Setup
