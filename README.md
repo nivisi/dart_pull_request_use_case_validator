@@ -37,7 +37,7 @@ This action validates your code base to have correct use case classes.
         - name: Checkout
           uses: actions/checkout@v2
         - name: Validate PR Use Cases
-          uses: ./
+          uses: nivisi/dart_pull_request_use_case_validator@0.0.1
           with:
              github-token: ${{ github.token }}
              method-name: run # Optional
