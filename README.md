@@ -37,7 +37,7 @@ This action validates your code base to have correct use case classes.
         - name: Checkout
           uses: actions/checkout@v2
         - name: Validate PR Use Cases
-          uses: nivisi/dart_pull_request_use_case_validator@0.0.1
+          uses: nivisi/dart_pull_request_use_case_validator@0.0.2
           with:
              github-token: ${{ github.token }}
              method-name: run # Optional
@@ -69,5 +69,5 @@ Desired public callable method of a use case.
 The message that is printed in the approve review message.
 
 <!-- References -->
-[version-img]: https://img.shields.io/badge/action-v0.0.1-white
+[version-img]: https://img.shields.io/badge/action-v0.0.2-white
 [version-url]: https://github.com/marketplace/actions/dart-pull-request-use-case-validator
