@@ -1,5 +1,7 @@
 name: 'Dart Pull Request Use Case Validator'
 description: 'Validates your use cases to have valid class names and methods.'
+icon: search
+color: white
 inputs:
    github-token:
      description: 'GitHub Access Token'
