@@ -2,8 +2,7 @@
 
 const core = require("@actions/core");
 const github = require("@actions/github");
-const { promise: fs } = require("fs");
-const fs2 = require("fs");
+const fs = require("fs");
 
 function constructMustContainMethodMessage(methodName) {
     return "This class must contain only one public method called `" + methodName + "`";
@@ -165,7 +164,7 @@ async function processFile(
 
         console.log("Reading the file ...");
 
-        fs2.readFile(fileName, 'utf8', (err, data) => {
+        fs.readFile(fileName, 'utf8', (err, data) => {
             if (err) {
                 core.setFailed(err);
             } else {
