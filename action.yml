@@ -1,13 +1,15 @@
-name: 'Hello World'
-description: 'Greet someone and record the time'
+name: 'Dart Pull Request Use Case Validator'
+description: 'Validates your use cases to have valid class names and methods.'
 inputs:
-  who-to-greet:  # id of input
-    description: 'Who to greet'
-    required: true
-    default: 'World'
+   github-token:
+     description: 'GitHub Access Token'
+     default: ${{ github.token }}
+     required: true
+   method-name:
+     description: 'Desired public callable method of a use case.'
+     required: false
+     default: 'run'
 outputs:
-  time: # id of output
-    description: 'The time we greeted you'
 runs:
   using: 'node16'
   main: 'index.js'
