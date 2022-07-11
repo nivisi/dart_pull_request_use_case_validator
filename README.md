@@ -1,4 +1,4 @@
-# Dart Pull Request Use Case Validator
+# Dart Pull Request Use Case Validator [![version][version-img]][version-url]
 
 This action validates your code base to have correct use case classes.
 
@@ -67,3 +67,7 @@ Desired public callable method of a use case.
 ### `approve-message`
 
 The message that is printed in the approve review message.
+
+<!-- References -->
+[version-img]: https://img.shields.io/badge/action-v0.0.1-white
+[version-url]: https://github.com/marketplace/actions/dart-pull-request-use-case-validator
