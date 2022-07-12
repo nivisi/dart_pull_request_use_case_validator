@@ -2,7 +2,21 @@
 
 This action validates your code base to have correct use case classes.
 
+### Table of contents
+
+- [How it works](https://github.com/nivisi/dart_pull_request_use_case_validator#how-it-works)
+  - [Example](https://github.com/nivisi/dart_pull_request_use_case_validator#example)
+  - [Reports](https://github.com/nivisi/dart_pull_request_use_case_validator#reports)
+  - [Validation rules](https://github.com/nivisi/dart_pull_request_use_case_validator#validation-rules)
+  - [Configurable parameters](https://github.com/nivisi/dart_pull_request_use_case_validator#configurable-parameters)
+- [Setup](https://github.com/nivisi/dart_pull_request_use_case_validator#setup)
+- [Note ❗](https://github.com/nivisi/dart_pull_request_use_case_validator#note-%EF%B8%8F)
+
 ## How it works
+
+### Example
+
+Check out the [example repository](https://github.com/nivisi/dart_pull_request_use_case_validator_example) with two Pull Requests: [valid](https://github.com/nivisi/dart_pull_request_use_case_validator_example/pull/2) and [invalid](https://github.com/nivisi/dart_pull_request_use_case_validator_example/pull/1).
 
 ### Reports
 
@@ -31,14 +45,11 @@ Desired public callable method of a use case.
 
 The message that is printed in the approve review message.
 
-## Example
-
-Check out the [example repository](https://github.com/nivisi/dart_pull_request_use_case_validator_example) with two Pull Requests: [valid](https://github.com/nivisi/dart_pull_request_use_case_validator_example/pull/2) and [invalid](https://github.com/nivisi/dart_pull_request_use_case_validator_example/pull/1)
-
 ## Setup
 
 - Create a workflow file in the root of your project under this path: `.github/workflow/your_file_name.yml`
 - Declare the workflow:
+   
   ```
     name: PR Use Cases Validation
 
@@ -67,10 +78,9 @@ Check out the [example repository](https://github.com/nivisi/dart_pull_request_u
              method-name: run # Optional
              approve-message: Great job # Optional
   ```
+- That's it! The action now will validate your code base 🙂
 
-
-
-## ❗️ Note
+## Note ❗️
 
 The bot will request changes every time the workflow is triggered. E.g. if you push the code that contains problems, they will get reported. If after that you would push changes w/o fixing existing problems the bot will re-report the already reported problems.
 
