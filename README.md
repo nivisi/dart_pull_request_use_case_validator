@@ -48,7 +48,7 @@ Check out the [example repository](https://github.com/nivisi/dart_pull_request_u
              approve-message: Great job # Optional
   ```
 
-### Reports
+### Enjoy the reports
 
 If this action will find issues, it will request changes. If possible, it will point out on the problems and, if applicable, would suggest how to fix them.
 
