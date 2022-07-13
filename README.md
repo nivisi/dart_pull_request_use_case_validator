@@ -78,7 +78,7 @@ The message that is printed in the approve review message.
              method-name: run # Optional
              approve-message: Great job # Optional
   ```
-- That's it! The action now will validate your code base 🙂
+- That's it! The action now will validate your code base on pull requests 🙂
 
 ## Note ❗️
 
