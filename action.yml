@@ -16,6 +16,10 @@ inputs:
      description: 'The message that is printed in the approve review message.'
      required: false
      default: 'The use cases for this pull requests were implemented correctly! Good job 👍'
+    single-class-in-file:
+     description: 'Whether a use case file must contain only one class'
+     required: true
+     default: true
 runs:
   using: 'node16'
   main: 'index.js'
