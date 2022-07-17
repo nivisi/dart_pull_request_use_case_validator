@@ -14,7 +14,7 @@ function constructHasNoClassDeclarationMessage(
     classDeclaration,
     addSuggestion
 ) {
-    var classDeclarationMessage = "The use case has the wrong name, based on the file name.\n";
+    var classDeclarationMessage = "This use case file does not contain a valid use case class.\n";
 
     if (addSuggestion) {
         classDeclarationMessage += "\n";
@@ -104,7 +104,7 @@ function processClassDeclaration(
             if (classDeclarations.length > 1) {
                 console.log("There is more than one class declaration");
 
-                const classDeclarationMessage = "The ` " + filePath + "` must not contain more than one class.";
+                const classDeclarationMessage = "The `" + filePath + "` must not contain more than one class.";
                 let comment = { path: filePath, line: 1, body: classDeclarationMessage };
                 reviewComments.push(comment);
             }
@@ -123,7 +123,7 @@ function processClassDeclaration(
 
         console.log(`Expected class name: «${expectedClassName}»`);
 
-        var didFindClass = false;
+        var didFindUseCaseClass = false;
 
         var firstClassIndex = -1;
         var firstClassName = '';
@@ -169,11 +169,11 @@ function processClassDeclaration(
                 continue;
             }
 
-            didFindClass = true;
+            didFindUseCaseClass = true;
             break;
         }
 
-        if (didFindClass) {
+        if (didFindUseCaseClass) {
             console.log(`The use case has the correct name «${expectedClassName}»`);
             // TODO: Find incorrect file name messages in the path and resolve them.
         } else {
@@ -188,7 +188,7 @@ function processClassDeclaration(
                     expectedClassName,
                     firstUseCaseClassName,
                     firstUseCaseClassDeclaration,
-                    true
+                    true,
                 );
             } else if (firstClassIndex != -1) {
                 indexToUse = firstClassIndex;
