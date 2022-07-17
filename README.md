@@ -8,7 +8,6 @@ This action validates your code base to have correct use case classes.
   - [Example](https://github.com/nivisi/dart_pull_request_use_case_validator#example)
   - [Reports](https://github.com/nivisi/dart_pull_request_use_case_validator#reports)
   - [Validation rules](https://github.com/nivisi/dart_pull_request_use_case_validator#validation-rules)
-  - [Configurable parameters](https://github.com/nivisi/dart_pull_request_use_case_validator#configurable-parameters)
 - [Setup](https://github.com/nivisi/dart_pull_request_use_case_validator#setup)
 - [Note ❗](https://github.com/nivisi/dart_pull_request_use_case_validator#note-%EF%B8%8F)
 
@@ -31,52 +30,54 @@ If no issues were found, the bot will approve the PR:
 ### Validation rules
 
 - The name of a use case file ends with `_use_case.dart`;
-- The file must contain only one class;
 - That class must match the file name, e.g. for `my_super_use_case.dart` it would be `MySuperUseCase`;
 - The use case class must contain only one callable public method. The name of that method is configurable, see below.
 
-### Configurable parameters
-
-#### `method-name`
-
-Desired public callable method of a use case.
-
-#### `approve-message`
-
-The message that is printed in the approve review message.
-
 ## Setup
 
-- Create a workflow file in the root of your project under this path: `.github/workflow/your_file_name.yml`
-- Declare the workflow:
+- Create a workflow file in the root of your project under this path: `.github/workflows/your_file_name.yml`
+- Declare the workflow! You can find the list of available inputs in the example below
    
   ```
-    name: PR Use Cases Validation
+  name: PR Use Cases Validation
 
-    on:
-       pull_request:
-         types:
-          - opened
-          - edited
-          - reopened
-          - synchronize
-
-       workflow_dispatch:
-
-    jobs:
-      pr_usecases_validation:
-
-        runs-on: ubuntu-latest
-
-        steps:
-        - name: Checkout
-          uses: actions/checkout@v2
-        - name: Validate PR Use Cases
-          uses: nivisi/dart_pull_request_use_case_validator@0.0.2
-          with:
-             github-token: ${{ github.token }}
-             method-name: run # Optional
-             approve-message: Great job # Optional
+  on:
+     pull_request:
+       types:
+        # Configure these types yourself!
+        - opened
+        - edited
+        - reopened
+        - synchronize
+  
+     workflow_dispatch:
+  
+  jobs:
+    pr_usecases_validation:
+  
+      runs-on: ubuntu-latest
+  
+      steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Validate PR Use Cases
+        uses: nivisi/dart_pull_request_use_case_validator@0.0.2
+        with:
+           # GitHub Access Token
+           # Required. Default is ${{ github.token }}
+           github-token: ${{ github.token }}
+  
+           # Desired public callable method of a use case.
+           # Required. Default is «run»
+           method-name: run
+  
+           # The message that is printed in the approve review message.
+           # Optional. Default is «The use cases for this pull requests were implemented correctly! Good job 👍»
+           approve-message: Great job
+  
+           # Whether a use case file must contain only one class.
+           # Required. Default is «true»
+           single-class-in-file: true
   ```
 - That's it! The action now will validate your code base on pull requests 🙂
 
