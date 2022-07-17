@@ -261,6 +261,13 @@ async function run() {
         const isSingleClassInFile = core.getInput("single-class-in-file");
         const githubToken = core.getInput("github-token");
 
+        console.log("🔎 Dart Use Case validator!");
+        console.log("");
+        console.log("===== INPUTS =====");
+        console.log(`methodName :${methodName}`);
+        console.log(`approveMessage :${approveMessage}`);
+        console.log(`isSingleClassInFile :${isSingleClassInFile}`);
+
         const context = github.context;
 
         const pullNumber = context.payload.pull_request.number;
