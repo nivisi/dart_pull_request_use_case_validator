@@ -8,7 +8,12 @@ function constructMustContainMethodMessage(methodName) {
     return "This class must contain only one public method called `" + methodName + "`";
 }
 
-function constructHasNoClassDeclarationMessage(expectedClassName, realClassName, classDeclaration, addSuggestion) {
+function constructHasNoClassDeclarationMessage(
+    expectedClassName,
+    realClassName,
+    classDeclaration,
+    addSuggestion
+) {
     var classDeclarationMessage = "The use case has the wrong name, based on the file name.\n";
 
     if (addSuggestion) {
@@ -17,14 +22,14 @@ function constructHasNoClassDeclarationMessage(expectedClassName, realClassName,
         classDeclarationMessage += classDeclaration.replace(realClassName, expectedClassName);
         classDeclarationMessage += "\n```";
     } else {
-        classDeclarationMessage += "It is `" + realClassName + "`, but should be `" + expectedClassName + "`.";
+        if (realClassName) {
+            classDeclarationMessage += "It is `" + realClassName + "`, but should be `" + expectedClassName + "`.";
+        } else {
+            classDeclarationMessage += "It should be `" + expectedClassName + "`.";
+        }
     }
 
     return classDeclarationMessage;
-}
-
-function delay(time) {
-    return new Promise(resolve => setTimeout(resolve, time));
 }
 
 function processMethodDeclaration(
@@ -80,7 +85,7 @@ function processClassDeclaration(
     rawContent,
     rawContentLines,
     reviewComments,
-    existingReviewComments
+    isSingleClassInFile
 ) {
     console.log("\nPROCESSING CLASS DECLARATION\n");
 
@@ -88,60 +93,118 @@ function processClassDeclaration(
 
     const classDeclarations = rawContent.match(classDeclarationRegex);
 
-    if (!classDeclarations) {
-        console.log("There is no class declaration!");
+    if (!classDeclarations || classDeclarations.length == 0) {
+        console.log("There are no class declarations!");
         const classDeclarationMessage = "This file does not contain a use case class.";
 
         let comment = { path: filePath, line: 1, body: classDeclarationMessage };
         reviewComments.push(comment);
     } else {
-        if (classDeclarations.length > 1) {
-            console.log("There is more than one class declaration");
+        if (isSingleClassInFile) {
+            if (classDeclarations.length > 1) {
+                console.log("There is more than one class declaration");
 
-            const classDeclarationMessage = `The ${filePath} must not contain more than one class.`;
-            let comment = { path: filePath, line: 1, body: classDeclarationMessage };
-            reviewComments.push(comment);
-        } else {
-            let first = classDeclarations[0];
-            let className = first.split(" ")[1];
-            let fileParts = filePath.split("/");
-
-            console.log(`There is only one class declaration, «${first}»`);
-
-            let fileName = fileParts[fileParts.length - 1].replace("_use_case.dart", "");
-            let fileNameParts = fileName.split("_");
-
-            var expectedClassName = "";
-            for (let index in fileNameParts) {
-                let fileNamePart = fileNameParts[index];
-                expectedClassName += fileNamePart.charAt(0).toUpperCase() + fileNamePart.slice(1);
+                const classDeclarationMessage = `The ${filePath} must not contain more than one class.`;
+                let comment = { path: filePath, line: 1, body: classDeclarationMessage };
+                reviewComments.push(comment);
             }
-            expectedClassName += "UseCase";
+        }
 
-            console.log(`Expected class name: «${expectedClassName}»`);
+        let fileParts = filePath.split("/");
+        let fileName = fileParts[fileParts.length - 1].replace("_use_case.dart", "");
+        let fileNameParts = fileName.split("_");
 
-            function findFileName(x) {
-                return x.includes(first);
+        var expectedClassName = "";
+        for (let index in fileNameParts) {
+            let fileNamePart = fileNameParts[index];
+            expectedClassName += fileNamePart.charAt(0).toUpperCase() + fileNamePart.slice(1);
+        }
+        expectedClassName += "UseCase";
+
+        console.log(`Expected class name: «${expectedClassName}»`);
+
+        var didFindClass = false;
+
+        var firstClassIndex = -1;
+        var firstClassName = '';
+        var firstClassDeclaration = '';
+
+        var firstUseCaseClassIndex = -1;
+        var firstUseCaseClassName = '';
+        var firstUseCaseClassDeclaration = '';
+
+        for (let index in classDeclarations) {
+            let classDeclaration = classDeclarations[index];
+            let className = classDeclaration.split(" ")[1];
+
+            if (firstClassIndex == -1) {
+                function findFileName(x) {
+                    return x.includes(className);
+                }
+
+                firstClassIndex = rawContentLines.findIndex(findFileName);
+                if (firstClassIndex != -1) {
+                    firstClassName = className;
+                    firstClassDeclaration = classDeclaration;
+                }
+            }
+
+            if (!className.endsWith("UseCase")) {
+                continue;
+            }
+
+            if (firstUseCaseClassIndex == -1) {
+                function findFileName(x) {
+                    return x.includes(className);
+                }
+
+                firstUseCaseClassIndex = rawContentLines.findIndex(findFileName);
+                if (firstUseCaseClassIndex != -1) {
+                    firstUseCaseClassName = className;
+                    firstUseCaseClassDeclaration = classDeclaration;
+                }
             }
 
             if (className != expectedClassName) {
-                console.log(`The use case has the incorrect name, ${className}. But it should be ${expectedClassName}`);
-
-                let linePosition = rawContentLines.findIndex(findFileName);
-                var classDeclarationMessage = "";
-
-                if (linePosition == -1) {
-                    classDeclarationMessage += constructHasNoClassDeclarationMessage(expectedClassName, className, first, false);
-                } else {
-                    classDeclarationMessage += constructHasNoClassDeclarationMessage(expectedClassName, className, first, true);
-                }
-
-                let comment = { path: filePath, line: linePosition == -1 ? 1 : linePosition + 1, body: classDeclarationMessage };
-                reviewComments.push(comment);
-            } else {
-                // TODO: Find incorrect file name messages in the path and resolve them.
-                console.log("The use case has the correct name, " + expectedClassName);
+                continue;
             }
+
+            didFindClass = true;
+            break;
+        }
+
+        if (didFindClass) {
+            console.log(`The use case has the correct name «${expectedClassName}»`);
+            // TODO: Find incorrect file name messages in the path and resolve them.
+        } else {
+            console.log(`The use case file does not contain a class named ${expectedClassName}.`);
+
+            var classDeclarationMessage = "";
+            var indexToUse = null;
+
+            if (firstUseCaseClassIndex != -1) {
+                indexToUse = firstUseCaseClassIndex;
+                classDeclarationMessage += constructHasNoClassDeclarationMessage(
+                    expectedClassName,
+                    firstUseCaseClassName,
+                    firstUseCaseClassDeclaration,
+                    true
+                );
+            } else if (firstClassIndex != -1) {
+                indexToUse = firstClassIndex;
+                classDeclarationMessage += constructHasNoClassDeclarationMessage(
+                    expectedClassName,
+                    firstClassName,
+                    firstClassDeclaration,
+                    true
+                );
+            } else {
+                indexToUse = 0;
+                classDeclarationMessage += constructHasNoClassDeclarationMessage(expectedClassName, null, null, false);
+            }
+
+            let comment = { path: filePath, line: indexToUse + 1, body: classDeclarationMessage };
+            reviewComments.push(comment);
         }
     }
 }
@@ -150,7 +213,8 @@ async function processFile(
     file,
     methodName,
     reviewComments,
-    existingReviewComments
+    existingReviewComments,
+    isSingleClassInFile
 ) {
     return new Promise((resolve, reject) => {
         let fileName = file.filename;
@@ -173,7 +237,13 @@ async function processFile(
 
                 let rawContentLines = rawContent.split("\n");
 
-                processClassDeclaration(fileName, rawContent, rawContentLines, reviewComments, existingReviewComments);
+                processClassDeclaration(
+                    fileName,
+                    rawContent,
+                    rawContentLines,
+                    reviewComments,
+                    isSingleClassInFile
+                );
                 processMethodDeclaration(fileName, rawContent, rawContentLines, methodName, reviewComments);
             }
 
@@ -188,6 +258,7 @@ async function run() {
     try {
         const methodName = core.getInput("method-name");
         const approveMessage = core.getInput("approve-message");
+        const isSingleClassInFile = core.getInput("single-class-in-file");
         const githubToken = core.getInput("github-token");
 
         const context = github.context;
@@ -231,7 +302,7 @@ async function run() {
         for (let index in files.data) {
             let file = files.data[index];
 
-            await processFile(file, methodName, reviewComments, existingReviewComments);
+            await processFile(file, methodName, reviewComments, existingReviewComments, isSingleClassInFile);
         }
 
         var latestPrReviewState;
