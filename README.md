@@ -61,7 +61,7 @@ If no issues were found, the bot will approve the PR:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Validate PR Use Cases
-        uses: nivisi/dart_pull_request_use_case_validator@0.0.2
+        uses: nivisi/dart_pull_request_use_case_validator@0.0.3
         with:
            # GitHub Access Token
            # Required. Default is ${{ github.token }}
@@ -87,5 +87,5 @@ The bot will request changes every time the workflow is triggered. E.g. if you p
 
 
 <!-- References -->
-[version-img]: https://img.shields.io/badge/action-v0.0.2-white
+[version-img]: https://img.shields.io/badge/action-v0.0.3-white
 [version-url]: https://github.com/marketplace/actions/dart-pull-request-use-case-validator
