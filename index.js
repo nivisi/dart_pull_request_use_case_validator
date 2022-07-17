@@ -258,8 +258,16 @@ async function run() {
     try {
         const methodName = core.getInput("method-name");
         const approveMessage = core.getInput("approve-message");
-        const isSingleClassInFile = core.getInput("single-class-in-file");
+        var isSingleClassInFile = core.getInput("single-class-in-file");
         const githubToken = core.getInput("github-token");
+        
+        if (isSingleClassInFile == '') {
+            isSingleClassInFile = 'true';
+        }
+        if (methodName == '') {
+            core.setFailed("method-name cannot be empty.");
+            return;
+        }
 
         console.log("🔎 Dart Use Case validator!");
         console.log("");
