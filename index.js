@@ -100,11 +100,11 @@ function processClassDeclaration(
         let comment = { path: filePath, line: 1, body: classDeclarationMessage };
         reviewComments.push(comment);
     } else {
-        if (isSingleClassInFile) {
+        if (isSingleClassInFile == true) {
             if (classDeclarations.length > 1) {
                 console.log("There is more than one class declaration");
 
-                const classDeclarationMessage = `The ${filePath} must not contain more than one class.`;
+                const classDeclarationMessage = "The ` " + filePath + "` must not contain more than one class.";
                 let comment = { path: filePath, line: 1, body: classDeclarationMessage };
                 reviewComments.push(comment);
             }
