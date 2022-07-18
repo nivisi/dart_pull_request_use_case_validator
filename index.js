@@ -397,11 +397,15 @@ async function run() {
             reviewTableRows += `| ${rowFile} | ${rowStatus} | ${rowDetails} |\n`;
         }
 
+        console.log("\n=== DONE PROCESSING FILES ===\n\n");
+
         if (reviewTableRows != '') {
             var reviewTable = '';
             reviewTable += '| File | Status | Details |';
             reviewTable += '| :--- | :----: | :------ |'
             reviewTable += reviewTableRows;
+
+            console.log(reviewTable);
 
             await octokit.rest.pulls.updateReview({
                 owner: context.repo.owner,
