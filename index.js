@@ -4,6 +4,15 @@ const core = require("@actions/core");
 const github = require("@actions/github");
 const fs = require("fs");
 
+const useCaseValidationOutputHeader = "🔎 Use Case Validator\n_Validating ..._";
+
+const successfulOutput = "✅";
+const unsuccessfulOutput = "❌";
+const detailsIncorrectPublicMethod = "Incorrect public method";
+const detailsNoUseCaseClass = "No valid use case class";
+const detailsMultipleClasses = "Multiple classes in a single file";
+const detailsAllValid = "All valid!";
+
 function constructMustContainMethodMessage(methodName) {
     return "This class must contain only one public method called `" + methodName + "`";
 }
@@ -33,13 +42,14 @@ function constructHasNoClassDeclarationMessage(
 }
 
 function processMethodDeclaration(
-    fileName,
+    filePath,
     rawContent,
     rawContentLines,
     methodName,
     reviewComments
 ) {
     console.log("\nPROCESSING METHOD DECLARATION\n");
+    let methodDeclarationErrors = [];
 
     const regexStr = `([:space:]*) (.+) (${methodName})\()`;
     const methodDeclarationRegex = RegExp(regexStr, "g");
@@ -47,21 +57,23 @@ function processMethodDeclaration(
 
     if (methodDeclaration) {
         console.log(`The ${methodName} method is correctly declared!`);
-        return;
+        return methodDeclarationErrors;
     }
+
+    methodDeclarationErrors.push(detailsIncorrectPublicMethod);
 
     const otherMethodDeclarationRegex = /([:space:]*) (.+) (.+)\(/g;
     const otherMethodDeclarations = rawContent.match(otherMethodDeclarationRegex);
 
     if (!otherMethodDeclarations || otherMethodDeclarations.length == 0) {
-        console.log(`The class does not contain the ${methodName} method and any other public method`);
+        console.log(`The class does not contain the \`${methodName}\` method and any other public method`);
 
         const methodDeclarationMessage = constructMustContainMethodMessage(methodName);
 
-        let comment = { path: fileName, line: 1, body: methodDeclarationMessage };
+        let comment = { path: filePath, line: 1, body: methodDeclarationMessage };
         reviewComments.push(comment);
 
-        return;
+        return methodDeclarationErrors;
     }
 
     console.log(`The class does not contain the ${methodName} method, but contains other public methods:\n${otherMethodDeclarations}`);
@@ -76,11 +88,14 @@ function processMethodDeclaration(
 
     let linePosition = rawContentLines.findIndex(findMethodDeclaration);
 
-    let comment = { path: fileName, line: linePosition == -1 ? 1 : linePosition + 1, body: methodDeclarationMessage };
+    let comment = { path: filePath, line: linePosition == -1 ? 1 : linePosition + 1, body: methodDeclarationMessage };
     reviewComments.push(comment);
+
+    return methodDeclarationErrors;
 }
 
 function processClassDeclaration(
+    fileName,
     filePath,
     rawContent,
     rawContentLines,
@@ -88,6 +103,7 @@ function processClassDeclaration(
     isSingleClassInFile
 ) {
     console.log("\nPROCESSING CLASS DECLARATION\n");
+    let classDeclarationErrors = [];
 
     const classDeclarationRegex = /(class) (.+) (.*){/g;
 
@@ -99,6 +115,8 @@ function processClassDeclaration(
 
         let comment = { path: filePath, line: 1, body: classDeclarationMessage };
         reviewComments.push(comment);
+
+        classDeclarationErrors.push(detailsNoUseCaseClass);
     } else {
         if (isSingleClassInFile.toLowerCase() == "true") {
             if (classDeclarations.length > 1) {
@@ -107,11 +125,11 @@ function processClassDeclaration(
                 const classDeclarationMessage = "The `" + filePath + "` must not contain more than one class.";
                 let comment = { path: filePath, line: 1, body: classDeclarationMessage };
                 reviewComments.push(comment);
+
+                classDeclarationErrors.push(detailsMultipleClasses);
             }
         }
 
-        let fileParts = filePath.split("/");
-        let fileName = fileParts[fileParts.length - 1].replace("_use_case.dart", "");
         let fileNameParts = fileName.split("_");
 
         var expectedClassName = "";
@@ -205,30 +223,32 @@ function processClassDeclaration(
 
             let comment = { path: filePath, line: indexToUse + 1, body: classDeclarationMessage };
             reviewComments.push(comment);
+
+            classDeclarationErrors.push(detailsNoUseCaseClass);
         }
     }
+
+    return classDeclarationErrors;
 }
 
 async function processFile(
     file,
+    fileName,
     methodName,
     reviewComments,
     existingReviewComments,
     isSingleClassInFile
 ) {
     return new Promise((resolve, reject) => {
-        let fileName = file.filename;
+        const filePath = file.filename;
 
-        if (!fileName.endsWith("_use_case.dart")) {
-            resolve();
-            return;
-        }
-
-        console.log(`======= PROCESSING ${fileName} ========`);
+        console.log(`======= PROCESSING ${filePath} ========`);
 
         console.log("Reading the file ...");
 
-        fs.readFile(fileName, 'utf8', (err, data) => {
+        fs.readFile(filePath, 'utf8', (err, data) => {
+            let errors = [];
+
             if (err) {
                 core.setFailed(err);
             } else {
@@ -237,17 +257,27 @@ async function processFile(
 
                 let rawContentLines = rawContent.split("\n");
 
-                processClassDeclaration(
+                let classDeclarationErrors = processClassDeclaration(
                     fileName,
+                    filePath,
                     rawContent,
                     rawContentLines,
                     reviewComments,
                     isSingleClassInFile
                 );
-                processMethodDeclaration(fileName, rawContent, rawContentLines, methodName, reviewComments);
+                let methodDeclarationErrors = processMethodDeclaration(
+                    filePath,
+                    rawContent,
+                    rawContentLines,
+                    methodName,
+                    reviewComments
+                );
+
+                errors.push(classDeclarationErrors);
+                errors.push(methodDeclarationErrors);
             }
 
-            resolve();
+            resolve(errors);
         });
     });
 
@@ -258,16 +288,8 @@ async function run() {
     try {
         const methodName = core.getInput("method-name");
         const approveMessage = core.getInput("approve-message");
-        var isSingleClassInFile = core.getInput("single-class-in-file");
+        const isSingleClassInFile = core.getInput("single-class-in-file");
         const githubToken = core.getInput("github-token");
-        
-        if (isSingleClassInFile == '') {
-            isSingleClassInFile = 'true';
-        }
-        if (methodName == '') {
-            core.setFailed("method-name cannot be empty.");
-            return;
-        }
 
         console.log("🔎 Dart Use Case validator!");
         console.log("");
@@ -311,19 +333,86 @@ async function run() {
             pull_number: pullNumber,
         });
 
+        let botPrReviews = existingPrReviews.data.filter(e => e.user.login == "github-actions[bot]");
+        var validationOutputCommentId = null;
+
+        if (!botPrReviews || botPrReviews.length == 0) {
+            let result = await octokit.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pullNumber,
+                event: "COMMENT",
+                body: useCaseValidationOutputHeader
+            });
+
+            validationOutputCommentId = result.pull_request_review_id;
+        } else {
+            let validationOutputComment = botPrReviews.find(e => e.body.startsWith("🔎 Use Case Validator"));
+
+            if (validationOutputComment) {
+                validationOutputCommentId = validationOutputComment.pull_request_review_id;
+            } else {
+                let result = await octokit.rest.pulls.createReview({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: pullNumber,
+                    event: "COMMENT",
+                    body: useCaseValidationOutputHeader
+                });
+
+                validationOutputCommentId = result.pull_request_review_id;
+            }
+        }
+
         console.log("PR files received!\n\n");
 
         let reviewComments = [];
 
+        var reviewTableRows = '';
+
         for (let index in files.data) {
             let file = files.data[index];
+            let filePath = file.filename;
 
-            await processFile(file, methodName, reviewComments, existingReviewComments, isSingleClassInFile);
+            if (!filePath.endsWith("_use_case.dart")) {
+                continue;
+            }
+
+            let fileParts = filePath.split('/');
+            let fileName = fileParts[fileParts.length - 1];
+
+            let declarationErrors = await processFile(file, fileName, methodName, reviewComments, existingReviewComments, isSingleClassInFile);
+            let areThereAnyErrors = declarationErrors && declarationErrors.length != 0;
+
+            let rowFile = `\`${fileName}\`](${file.contents_url})`;
+            let rowStatus = areThereAnyErrors ? unsuccessfulOutput : successfulOutput;;
+            var rowDetails = '';
+
+            if (areThereAnyErrors) {
+                let details = declarationErrors.map(e => `— ${e}<br/>`);
+                rowDetails = details.substring(0, details.length - 6);
+            } else {
+                rowDetails = detailsAllValid;
+            }
+
+            reviewTableRows += `| ${rowFile} | ${rowStatus} | ${rowDetails} |\n`;
+        }
+
+        if (reviewTableRows != '') {
+            var reviewTable = '';
+            reviewTable += '| File | Status | Details |';
+            reviewTable += '| :--- | :----: | :------ |'
+            reviewTable += reviewTableRows;
+
+            await octokit.rest.pulls.updateReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: validationOutputCommentId,
+                body: `${useCaseValidationOutputHeader}\n\n${reviewTable}`
+            });
         }
 
         var latestPrReviewState;
-
-        let botPrReviews = existingPrReviews.data.filter(e => e.user.login == "github-actions[bot]");
         var latestBotPrReview;
 
         if (botPrReviews && botPrReviews.length && botPrReviews.length != 0) {
