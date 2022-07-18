@@ -389,8 +389,7 @@ async function run() {
             var rowDetails = '';
 
             if (areThereAnyErrors) {
-                let details = declarationErrors.map(e => `— ${e}<br/>`);
-                rowDetails = details.substring(0, details.length - 6);
+                rowDetails = declarationErrors.map(e => `— ${e}`).join('<br/>');
             } else {
                 rowDetails = detailsAllValid;
             }
